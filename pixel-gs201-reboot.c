@@ -114,27 +114,6 @@ static int pixel_reboot_handler(struct notifier_block *nb, unsigned long mode, v
 {
 	pixel_reboot_parse(cmd);
 
-	if (mode != SYS_POWER_OFF)
-		return NOTIFY_DONE;
-
-	while (1) {
-		/* wait for power button release */
-		if (!pmic_read_pwrkey_status()) {
-#if IS_ENABLED(CONFIG_GS_ACPM)
-			acpm_prepare_reboot();
-#endif
-			pr_info("ready to do power off.\n");
-			break;
-		} else {
-			/*
-			 * if power button is not released,
-			 * wait and check TA again
-			 */
-			pr_info("PWR Key is not released.\n");
-		}
-		mdelay(1000);
-	}
-
 	return NOTIFY_DONE;
 }
 
