@@ -25,7 +25,6 @@
 #include <soc/google/acpm_ipc_ctrl.h>
 #endif
 #include <soc/google/exynos-el3_mon.h>
-#include <soc/google/debug-snapshot.h>
 #include "../../bms/google_bms.h"
 
 #define EXYNOS_PMU_SYSIP_DAT0		(0x0810)
@@ -200,9 +199,8 @@ static int pixel_restart_handler(struct notifier_block *this, unsigned long mode
 	/* Do S/W Reset */
 	pr_emerg("%s: Pixel SoC reset right now\n", __func__);
 
-	if (s2mpg10_get_rev_id() == S2MPG10_EVT0 ||
-	    !rsbm_supported || !dbg_snapshot_get_reboot_status() ||
-	    dbg_snapshot_get_panic_status() || dbg_snapshot_get_warm_status()) {
+	if (s2mpg10_get_rev_id() == S2MPG10_EVT0 || !rsbm_supported ||
+	    reboot_mode == REBOOT_WARM || reboot_mode == REBOOT_SOFT) {
 		set_priv_reg(pmu_alive_base + warm_reboot_offset, warm_reboot_trigger);
 	} else {
 		pr_emerg("Set PS_HOLD Low.\n");
