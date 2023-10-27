@@ -20,12 +20,12 @@ kernel_module(
         "**/*.h",
         "Kbuild",
     ]) + [
-        "//private/google-modules/bms/misc:headers",
         "//private/google-modules/bms:headers",
+        "//private/google-modules/bms/misc:headers",
         "//private/google-modules/soc/gs:gs_soc_headers",
     ],
     outs = [
-        "exynos-reboot.ko",
+        "pixel-reboot.ko",
     ],
     kernel_build = "//private/google-modules/soc/gs:gs_kernel_build",
     visibility = [
