@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- *  exynos-reboot.c - Samsung Exynos SoC reset code
+ *  pixel-reboot.c - Google Pixel SoC reset code
  *
  * Copyright (c) 2019-2020 Samsung Electronics Co., Ltd.
  *
@@ -58,7 +58,7 @@ enum pon_reboot_mode {
 	REBOOT_MODE_RECOVERY		= 0xFF,
 };
 
-static void exynos_power_off(void)
+static void pixel_power_off(void)
 {
 	u32 poweroff_try = 0;
 	int power_gpio = -1;
@@ -108,7 +108,7 @@ static void exynos_power_off(void)
 	}
 }
 
-static void exynos_reboot_mode_set(u32 val)
+static void pixel_reboot_mode_set(u32 val)
 {
 	int ret;
 	u32 mode;
@@ -125,7 +125,7 @@ static void exynos_reboot_mode_set(u32 val)
 	}
 }
 
-static void exynos_reboot_parse(const char *cmd)
+static void pixel_reboot_parse(const char *cmd)
 {
 	if (cmd) {
 		u32 value = U32_MAX;
@@ -168,11 +168,11 @@ static void exynos_reboot_parse(const char *cmd)
 			reboot_mode = REBOOT_WARM;
 
 		if (value != U32_MAX)
-			exynos_reboot_mode_set(value);
+			pixel_reboot_mode_set(value);
 	}
 }
 
-static int exynos_reboot_handler(struct notifier_block *nb, unsigned long mode, void *cmd)
+static int pixel_reboot_handler(struct notifier_block *nb, unsigned long mode, void *cmd)
 {
 	u32 data;
 	int ret;
@@ -183,24 +183,24 @@ static int exynos_reboot_handler(struct notifier_block *nb, unsigned long mode, 
 
 	rsbm_supported = ret != -ENOENT;
 
-	exynos_reboot_parse(cmd);
+	pixel_reboot_parse(cmd);
 
 	return NOTIFY_DONE;
 }
 
-static struct notifier_block exynos_reboot_nb = {
-	.notifier_call = exynos_reboot_handler,
+static struct notifier_block pixel_reboot_nb = {
+	.notifier_call = pixel_reboot_handler,
 	.priority = INT_MAX,
 };
 
-static int exynos_restart_handler(struct notifier_block *this, unsigned long mode, void *cmd)
+static int pixel_restart_handler(struct notifier_block *this, unsigned long mode, void *cmd)
 {
 #if IS_ENABLED(CONFIG_GS_ACPM)
 	exynos_acpm_reboot();
 #endif
 
 	/* Do S/W Reset */
-	pr_emerg("%s: Exynos SoC reset right now\n", __func__);
+	pr_emerg("%s: Pixel SoC reset right now\n", __func__);
 
 	if (reboot_mode == REBOOT_WARM || reboot_mode == REBOOT_SOFT)
 		set_priv_reg(pmu_alive_base + dump_gpr_offset, DUMP_GPR_MODE);
@@ -222,12 +222,12 @@ static int exynos_restart_handler(struct notifier_block *this, unsigned long mod
 	return NOTIFY_DONE;
 }
 
-static struct notifier_block exynos_restart_nb = {
-	.notifier_call = exynos_restart_handler,
+static struct notifier_block pixel_restart_nb = {
+	.notifier_call = pixel_restart_handler,
 	.priority = 130,
 };
 
-static int exynos_reboot_probe(struct platform_device *pdev)
+static int pixel_reboot_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *np = pdev->dev.of_node;
@@ -290,39 +290,39 @@ static int exynos_reboot_probe(struct platform_device *pdev)
 	force_warm_reboot_on_thermal_shutdown = of_property_read_bool(np,
 						"force-warm-reboot-on-thermal-shutdown");
 
-	err = register_reboot_notifier(&exynos_reboot_nb);
+	err = register_reboot_notifier(&pixel_reboot_nb);
 	if (err) {
 		dev_err(dev, "cannot register reboot handler (err=%d)\n", err);
 		return err;
 	}
 
-	err = register_restart_handler(&exynos_restart_nb);
+	err = register_restart_handler(&pixel_restart_nb);
 	if (err) {
 		dev_err(dev, "cannot register restart handler (err=%d)\n", err);
-		unregister_reboot_notifier(&exynos_reboot_nb);
+		unregister_reboot_notifier(&pixel_reboot_nb);
 		return err;
 	}
 
-	pm_power_off = exynos_power_off;
+	pm_power_off = pixel_power_off;
 	dev_info(dev, "register restart handler successfully\n");
 
 	return 0;
 }
 
-static const struct of_device_id exynos_reboot_of_match[] = {
-	{ .compatible = "samsung,exynos-reboot" },
+static const struct of_device_id pixel_reboot_of_match[] = {
+	{ .compatible = "google,pixel-reboot" },
 	{}
 };
 
-static struct platform_driver exynos_reboot_driver = {
-	.probe = exynos_reboot_probe,
+static struct platform_driver pixel_reboot_driver = {
+	.probe = pixel_reboot_probe,
 	.driver = {
-		.name = "exynos-reboot",
-		.of_match_table = exynos_reboot_of_match,
+		.name = "pixel-reboot",
+		.of_match_table = pixel_reboot_of_match,
 	},
 };
-module_platform_driver(exynos_reboot_driver);
+module_platform_driver(pixel_reboot_driver);
 
-MODULE_DESCRIPTION("Exynos Reboot driver");
+MODULE_DESCRIPTION("Pixel Reboot driver");
 MODULE_LICENSE("GPL v2");
-MODULE_ALIAS("platform:exynos-reboot");
+MODULE_ALIAS("platform:pixel-reboot");
